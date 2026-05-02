@@ -1,4 +1,4 @@
-<img src="bolt_logo.png" width="300"/>
+<img src="https://raw.githubusercontent.com/chewwt/bolt/main/bolt_logo.png" width="300"/>
 
 [![CI](https://github.com/chewwt/bolt/actions/workflows/ci.yml/badge.svg)](https://github.com/chewwt/bolt/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/chewwt/bolt/branch/main/graph/badge.svg)](https://codecov.io/gh/chewwt/bolt)

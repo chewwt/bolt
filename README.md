@@ -1,5 +1,10 @@
 ![](bolt_logo.png)
 
+[![CI](https://github.com/chewwt/bolt/actions/workflows/ci.yml/badge.svg)](https://github.com/chewwt/bolt/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/chewwt/bolt/branch/main/graph/badge.svg)](https://codecov.io/gh/chewwt/bolt)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+
 A benchmark suite for Bayesian optimization of expensive LLM Tasks
 
 

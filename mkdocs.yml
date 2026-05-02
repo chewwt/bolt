@@ -1,0 +1,63 @@
+site_name: BoLT
+repo_url: https://github.com/chewwt/bolt
+repo_name: chewwt/bolt
+edit_uri: blob/main/
+
+theme:
+  name: material
+  palette:
+
+    - scheme: default
+      primary: blue grey
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+  logo: assets/logo_only.svg
+  favicon: assets/favicon.png
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            merge_init_into_class: false
+            show_source: true
+            show_bases: false
+            show_root_heading: true
+            members_order: source
+
+nav:
+  - Getting Started: index.md
+  - Problems: problems.md
+  - API Reference:
+      - Overview: api/index.md
+      - Hyperparameter Optimization: api/hpo.md
+      - Data Mixture Optimization: api/dm.md
+      - Prompt Optimization: api/po.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+
+watch:
+  - bolt/
+  - mkdocs.yml
+  - docs/

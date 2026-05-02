@@ -8,6 +8,10 @@
 A benchmark suite for Bayesian optimization of expensive LLM tasks. Each problem is backed by a pretrained neural-network surrogate or tabular data from real LLM experiments, so evaluations are fast and reproducible without running real LLM training.
 
 
+## Documentation
+
+Full documentation is available at [bolt-bench.readthedocs.io](https://bolt-bench.readthedocs.io/en/latest/).
+
 ## Installation
 
 `pip install bolt-bench`

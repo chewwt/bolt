@@ -14,7 +14,7 @@ For full parameter details see the [API Reference](./api/index.md).
 |------|-------------|-----------------|
 | Mixed-variable| Search spaces with both continuous and discrete/categorical variables | [HPO](./api/hpo.md#bolt.HPO) |
 | Mixed-variable + multi-fidelity | Combines mixed variables with multiple accuracy/cost levels | [HPOMultiFidelityToken](./api/hpo.md#bolt.HPOMultiFidelityToken), [HPOMultiFidelityModel](./api/hpo.md#bolt.HPOMultiFidelityModel) |
-| Simplex constrained | Search space is constrained by simplex | [DMCurriculum](./api/dm.md#bolt.DMCurriculum)|
+| Simplex constrained | Search space is constrained by two simplices | [DMCurriculum](./api/dm.md#bolt.DMCurriculum)|
 | Simplex constrained + multi-objective | Two or more objectives to optimize simultaneously | [DMCurriculumMO](./api/dm.md#bolt.DMCurriculumMO) |
 | Simplex constrained + heteroscedastic noise | Noise levels differ at different points | [DMCurriculumHet](./api/dm.md#bolt.DMCurriculumHet) |
 | High-dimensional | | [PO128](./api/po.md#bolt.PO128), [PO256](./api/po.md#bolt.PO256), [PO512](./api/po.md#bolt.PO512), [PO768](./api/po.md#bolt.PO768) |
@@ -52,7 +52,7 @@ Full alphabetical listing of all problems. Click the name to jump to its API ref
 
 | Problem | Type(s) | Dim | Objectives | Description |
 |---|---|---|---|---|
-| [DMCurriculum](./api/dm.md#bolt.DMCurriculum) | Simplex constrained | 6 | 1 | Data mixture curriculum optimization (inputs must fulfill simplex contraints) |
+| [DMCurriculum](./api/dm.md#bolt.DMCurriculum) | Simplex constrained | 6 | 1 | Data mixture curriculum optimization (inputs must fulfill two simplex contraints) |
 | [DMCurriculumHet](./api/dm.md#bolt.DMCurriculumHet) | Simplex constrained, heteroscedastic noise | 6 | 1 | Data mixture curriculum optimization with heteroscedastic noise |
 | [DMCurriculumMO](./api/dm.md#bolt.DMCurriculumMO) | Simplex constrained, multi-objective | 6 | 3 | Data mixture curriculum optimization with multiple objectives |
 | [HPO](./api/hpo.md#bolt.HPO) | Mixed-variable | 7 | 1 | Hyperparameter optimization for LoRA finetuning |

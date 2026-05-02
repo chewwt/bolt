@@ -8,8 +8,6 @@ from safetensors.torch import load_file
 
 from .base import Function
 
-# feature net from bobench_data
-
 
 class FeatureNet(nn.Module):
     r"""Three-layer MLP with LayerNorm for predicting LLM evaluation scores.

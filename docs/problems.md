@@ -2,7 +2,7 @@
 
 A catalogue of LLM optimization problems are available in this library. 
 
-Problems are backed by one or more pretrained emulators or tabular data downloaded automatically from HuggingFace Hub and cached locally for subsequent use. Emulator accuracy varies by problem — for Spearman's rank correlation coefficients and validation methodology see our [paper](#).
+Problems are backed by one or more pretrained emulators or tabular data downloaded automatically from HuggingFace Hub and cached locally for subsequent use. Emulator accuracy varies by problem — for Spearman's rank correlation coefficients and validation methodology see our [paper](https://arxiv.org/abs/2605.17000).
  
 For full parameter details see the [API Reference](./api/index.md).
  

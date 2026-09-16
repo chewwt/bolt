@@ -57,8 +57,10 @@ def pull_info_from_hf_hub(
         model_config = json.load(f)
 
     # read standardization params
+    # copy=True: under pandas copy-on-write to_numpy returns a read-only view,
+    # which torch.as_tensor warns about downstream
     df = pd.read_csv(csv_path)
-    y_mean = df["y_mean"].to_numpy()
-    y_std = df["y_std"].to_numpy()
+    y_mean = df["y_mean"].to_numpy(copy=True)
+    y_std = df["y_std"].to_numpy(copy=True)
 
     return model_path, model_config, y_mean, y_std

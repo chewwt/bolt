@@ -95,6 +95,8 @@ class LLMTestProblem(BaseTestProblem, ABC):
 
     name: str
     hf_repo: str  # must be set by subclass
+    # Pins the weights _optimal_value/_optimizers were measured against
+    hf_revision: str | None = None
 
     # params in BaseTestProblem
     dim: int  # defined in config.json on hf repo

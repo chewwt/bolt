@@ -28,7 +28,9 @@ def unstandardize_y(
     return (y * y_std) + y_mean
 
 
-def pull_info_from_hf_hub(hf_repo: str) -> tuple[str, dict, np.ndarray, np.ndarray]:
+def pull_info_from_hf_hub(
+    hf_repo: str, revision: str | None = None
+) -> tuple[str, dict, np.ndarray, np.ndarray]:
     r"""Download model weights, config, and standardization stats from a HuggingFace repo.
 
     Files fetched (cached locally by ``huggingface_hub``):
@@ -38,15 +40,17 @@ def pull_info_from_hf_hub(hf_repo: str) -> tuple[str, dict, np.ndarray, np.ndarr
 
     Args:
         hf_repo: HuggingFace repository id, e.g. ``"chewwt/hpo_qwen8b_emulator"``.
+        revision: Git revision to fetch — a tag, branch, or commit SHA.
+            Defaults to the repo's main branch.
 
     Returns:
         A four-tuple ``(model_path, model_config, y_mean, y_std)`` where
         ``model_path`` is the local path to the weights file, ``model_config``
         is the parsed JSON dict, and ``y_mean`` / ``y_std`` are 1-D numpy arrays.
     """
-    model_path = hf_hub_download(hf_repo, "model.safetensors")
-    config_path = hf_hub_download(hf_repo, "config.json")
-    csv_path = hf_hub_download(hf_repo, "model_standardize.csv")
+    model_path = hf_hub_download(hf_repo, "model.safetensors", revision=revision)
+    config_path = hf_hub_download(hf_repo, "config.json", revision=revision)
+    csv_path = hf_hub_download(hf_repo, "model_standardize.csv", revision=revision)
 
     # read model config
     with open(config_path, "r") as f:

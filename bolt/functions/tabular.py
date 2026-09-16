@@ -17,6 +17,7 @@ class TabularFunction(Function, ABC):
         input_cols: list[str],
         output_col: str,
         x_proc_func: Optional[Callable[..., Any]] = None,
+        revision: Optional[str] = None,
     ) -> None:
         r"""Load a tabular dataset from HuggingFace and build the lookup table.
 
@@ -27,10 +28,12 @@ class TabularFunction(Function, ABC):
             x_proc_func: Optional callable to transform the raw column data
                 before converting to a tensor. Receives the column dict and
                 must return an array-like.
+            revision: Git revision to fetch — a tag, branch, or commit SHA.
+                Defaults to the repo's main branch.
         """
         super().__init__()
 
-        self.ds = load_dataset(hf_repo, split="train")
+        self.ds = load_dataset(hf_repo, split="train", revision=revision)
 
         self.input_cols = input_cols
         self.output_col = output_col
@@ -88,6 +91,7 @@ class TabularFunctionEmbeddings(TabularFunction):
         input_cols: list[str],
         output_col: str,
         x_proc_func: Optional[Callable[..., Any]] = None,
+        revision: Optional[str] = None,
     ) -> None:
         r"""Load a tabular dataset where inputs are stored as embedding lists.
 
@@ -97,11 +101,19 @@ class TabularFunctionEmbeddings(TabularFunction):
             output_col: Column name whose values are returned as function outputs.
             x_proc_func: Optional callable to transform the raw list-of-embeddings
                 before stacking into a tensor.
+            revision: Git revision to fetch — a tag, branch, or commit SHA.
+                Defaults to the repo's main branch.
         """
         assert len(input_cols) == 1, (
             "TabularFunctionEmbeddings requires exactly one input column"
         )
-        super().__init__(hf_repo, input_cols, output_col, x_proc_func=x_proc_func)
+        super().__init__(
+            hf_repo,
+            input_cols,
+            output_col,
+            x_proc_func=x_proc_func,
+            revision=revision,
+        )
 
     def init_Xs(
         self, input_cols: list[str], x_proc_func: Optional[Callable[..., Any]] = None

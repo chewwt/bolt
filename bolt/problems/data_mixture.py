@@ -49,6 +49,7 @@ class DMCurriculum(LLMTestProblem):
 
     name = "dm_curriculum"
     hf_repo = "chewwt/dm_qwen4b_emulator"
+    hf_revision = "v0.1.0"
 
     dim = 6
     _bounds = [
@@ -89,7 +90,7 @@ class DMCurriculum(LLMTestProblem):
         )
 
         self.model_path, self.model_config, self.y_mean, self.y_std = (
-            pull_info_from_hf_hub(self.hf_repo)
+            pull_info_from_hf_hub(self.hf_repo, revision=self.hf_revision)
         )
 
         self.obj_func = MLPFunction(
@@ -157,6 +158,7 @@ class DMCurriculumMO(MultiObjectiveTestProblem, LLMTestProblem):
 
     name = "dm_curriculum_mo"
     hf_repo = "chewwt/dm_qwen4b_emulator"
+    hf_revision = "v0.1.0"
 
     dim = 6
     _bounds = [
@@ -198,7 +200,7 @@ class DMCurriculumMO(MultiObjectiveTestProblem, LLMTestProblem):
         )
 
         self.model_path, self.model_config, self.y_mean, self.y_std = (
-            pull_info_from_hf_hub(self.hf_repo)
+            pull_info_from_hf_hub(self.hf_repo, revision=self.hf_revision)
         )
 
         self.obj_func = MLPFunction(
@@ -263,7 +265,9 @@ class DMCurriculumHet(HeteroscedasticTestProblem, LLMTestProblem):
 
     name = "dm_curriculum_heteroscedastic"
     hf_repo = "chewwt/dm_qwen4b_emulator"
+    hf_revision = "v0.1.0"
     hf_repo_noise = "chewwt/dm_qwen4b_noise_emulator"
+    hf_revision_noise = "v0.1.0"
 
     dim = 6
     _bounds = [
@@ -303,10 +307,12 @@ class DMCurriculumHet(HeteroscedasticTestProblem, LLMTestProblem):
         )
 
         self.model_path, self.model_config, self.y_mean, self.y_std = (
-            pull_info_from_hf_hub(self.hf_repo)
+            pull_info_from_hf_hub(self.hf_repo, revision=self.hf_revision)
         )
         self.model_path_noise = hf_hub_download(
-            self.hf_repo_noise, "noise_model.safetensors"
+            self.hf_repo_noise,
+            "noise_model.safetensors",
+            revision=self.hf_revision_noise,
         )
 
         self.obj_func = MLPFunction(

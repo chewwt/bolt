@@ -15,6 +15,9 @@ class PO(LLMTestProblem):
     Search space: `dim`-dimensional embeddings from EmbeddingGemma, bounded to (-0.20, 0.27).
     """
 
+    hf_repo = "chewwt/po_qwen14b_tabular_data"
+    hf_revision = "v0.1.0"
+
     _bounds_range: tuple[float, float] = (-0.20, 0.27)
     _check_grad_at_opt: bool = True
     _optimal_value = 0.81
@@ -53,10 +56,11 @@ class PO(LLMTestProblem):
         super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
         self.obj_func = TabularFunctionEmbeddings(
-            "chewwt/po_qwen14b_tabular_data",
+            self.hf_repo,
             ["embedding"],
             "score",
             x_proc_func=lambda x: np.vstack(x)[:, : self.dim],
+            revision=self.hf_revision,
         )
 
     def _evaluate_true(self, X: torch.Tensor) -> torch.Tensor:

@@ -33,6 +33,7 @@ class HPO(LLMTestProblem):
 
     name = "hpo"
     hf_repo = "chewwt/hpo_qwen8b_emulator"
+    hf_revision = "v0.1.0"
 
     dim = 7
     _bounds = [
@@ -75,7 +76,7 @@ class HPO(LLMTestProblem):
         )
 
         self.model_path, self.model_config, self.y_mean, self.y_std = (
-            pull_info_from_hf_hub(self.hf_repo)
+            pull_info_from_hf_hub(self.hf_repo, revision=self.hf_revision)
         )
 
         self.obj_func = MLPFunction(
@@ -153,6 +154,7 @@ class HPOMultiFidelityToken(LLMTestProblem):
 
     name = "hpo_multifidelity_step"
     hf_repo = "chewwt/hpo_qwen8b_emulator"
+    hf_revision = "v0.1.0"
 
     dim = 8
     _bounds = [
@@ -200,7 +202,7 @@ class HPOMultiFidelityToken(LLMTestProblem):
         )
 
         self.model_path, self.model_config, self.y_mean, self.y_std = (
-            pull_info_from_hf_hub(self.hf_repo)
+            pull_info_from_hf_hub(self.hf_repo, revision=self.hf_revision)
         )
 
         self.obj_func = MLPFunction(
@@ -324,7 +326,9 @@ class HPOMultiFidelityModel(LLMTestProblem):
 
     name = "hpo_multifidelity_model"
     hf_repo_high_fid = "chewwt/hpo_qwen8b_emulator"  # high fid
+    hf_revision_high_fid = "v0.1.0"
     hf_repo_low_fid = "chewwt/hpo_qwen4b_emulator"
+    hf_revision_low_fid = "v0.1.0"
 
     dim = 8
     _bounds = [
@@ -373,13 +377,17 @@ class HPOMultiFidelityModel(LLMTestProblem):
             self.model_config_high_fid,
             self.y_mean_high_fid,
             self.y_std_high_fid,
-        ) = pull_info_from_hf_hub(self.hf_repo_high_fid)
+        ) = pull_info_from_hf_hub(
+            self.hf_repo_high_fid, revision=self.hf_revision_high_fid
+        )
         (
             self.model_path_low_fid,
             self.model_config_low_fid,
             self.y_mean_low_fid,
             self.y_std_low_fid,
-        ) = pull_info_from_hf_hub(self.hf_repo_low_fid)
+        ) = pull_info_from_hf_hub(
+            self.hf_repo_low_fid, revision=self.hf_revision_low_fid
+        )
 
         self.high_fidelity_obj_function = MLPFunction(
             self.model_config_high_fid["input_dim"],

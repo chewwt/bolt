@@ -50,12 +50,17 @@ class KernelRegressionModel(torch.nn.Module):
 class KRFunction(Function):
     r"""Function to call KernelRegressionModel"""
 
-    def __init__(self, model_path: str, scale_factor: float = 1.0):
+    def __init__(
+        self, model_path: str, gamma: float = 0.1, scale_factor: float = 1.0
+    ):
         r"""Load a pretrained :class:`KernelRegressionModel` from a ``.safetensors`` file.
 
         Args:
             model_path: Path to the ``.safetensors`` file containing
                 ``dual_coef`` and ``X_fit`` tensors.
+            gamma: Bandwidth the model was fit with. Recorded in the noise
+                emulator's ``config.json`` from emulator version 0.2.0 onwards;
+                the default of 0.1 matches emulators published before that.
             scale_factor: Scalar multiplier applied to all predictions (useful
                 for re-scaling noise estimates).
         """
@@ -66,7 +71,9 @@ class KRFunction(Function):
             raise FileNotFoundError(f"Path to model {model_path} does not exists")
 
         tensors = load_file(model_path)
-        self.model = KernelRegressionModel(tensors["dual_coef"], tensors["X_fit"])
+        self.model = KernelRegressionModel(
+            tensors["dual_coef"], tensors["X_fit"], gamma=float(gamma)
+        )
         self.model.eval()
 
         self.scale_factor = scale_factor

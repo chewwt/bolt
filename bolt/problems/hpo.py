@@ -33,7 +33,7 @@ class HPO(LLMTestProblem):
 
     name = "hpo"
     hf_repo = "chewwt/hpo_qwen8b_emulator"
-    hf_revision = "v0.1.0"
+    hf_revision = "v0.2.0"
 
     dim = 7
     _bounds = [
@@ -50,21 +50,23 @@ class HPO(LLMTestProblem):
     discrete_inds = [1, 2, 3, 5]
     categorical_inds = [6]
 
-    _optimal_value = 0.34647  # empirically found
-    _optimizers = [(0.31100, 2, 4, 2, 0.87056, 30, 1)]
+    _optimal_value = 0.35820  # empirically found
+    _optimizers = [(0.19333, 2, 5, 2, 0.97800, 30, 1)]
+
+    # Measured mean std at full budget, over 30 8B configs x 5 seeds.
+    _measured_std = 0.0290
 
     def __init__(
         self,
-        noise_std: None | float | list[float] = None,
+        noise_std: None | float | list[float] = _measured_std,
         negate: bool = False,
         dtype: torch.dtype = torch.double,
     ) -> None:
         r"""Hyperparameter optimization for Qwen3-8B-Base LoRA fine-tuning
 
         Args:
-            noise_std: Standard deviation of the observation noise. If a list is
-                provided, specifies separate noise standard deviations for each
-                objective in a multiobjective problem.
+            noise_std: Standard deviation of the observation noise. Defaults to
+                the empirically measured ``_measured_std``.
             negate: If True, negate the function.
             dtype: The dtype that is used for the bounds of the function.
         """
@@ -86,6 +88,8 @@ class HPO(LLMTestProblem):
             categorical_sizes=[],
             hidden_dim=self.model_config["hidden_dim"],
             output_dim=self.model_config["output_dim"],
+            # absent from pre-v0.2.0 configs, which are all 2-layer
+            n_layers=self.model_config.get("n_layers", 2),
         )
 
     def _evaluate_true(self, X: torch.Tensor) -> torch.Tensor:
@@ -137,8 +141,12 @@ class HPOMultiFidelityToken(LLMTestProblem):
            normalized over 1e5–9.1e6 tokens)
 
     Evaluation samples the emulator at ``fidelity_step`` intervals (≈500k tokens)
-    up to the queried fidelity and returns the cumulative max, ensuring monotonicity
-    for MF-BO methods.
+    up to the queried fidelity and returns the cumulative max, so values are
+    largely increasing with fidelity. This mirrors the real task, where the best
+    checkpoint seen so far can only improve as training continues.
+
+    The increase is not exact, because the cumulative max is taken over a
+    discrete grid rather than the whole interval. See :meth:`_evaluate_true`.
 
     Example usage:
     ```python
@@ -154,7 +162,7 @@ class HPOMultiFidelityToken(LLMTestProblem):
 
     name = "hpo_multifidelity_step"
     hf_repo = "chewwt/hpo_qwen8b_emulator"
-    hf_revision = "v0.1.0"
+    hf_revision = "v0.2.0"
 
     dim = 8
     _bounds = [
@@ -172,15 +180,20 @@ class HPOMultiFidelityToken(LLMTestProblem):
     discrete_inds = [1, 2, 3, 5]
     categorical_inds = [6]
     fidelity_step: float = (
-        0.056  # normalized interval (~500k tokens); cummax ensures monotonicity
+        0.056  # ~500k tokens; cummax over this grid (see _evaluate_true)
     )
 
-    _optimal_value = 0.35480  # empirically found
-    _optimizers = [(0.23094, 4, 3, 3, 0.33724, 30, 2, 1.0)]
+    _optimal_value = 0.35917  # empirically found
+    # fidelity 1 as values are cummax over fidelity steps
+    _optimizers = [(0.01284, 2, 5, 4, 1.00000, 30, 2, 1.0)]
+
+    # Measured mean std over all 90 (config, checkpoint) groups x 5 seeds, not just
+    # the 30 full-budget checkpoints, because fidelity sweeps training tokens.
+    _measured_std = 0.0220
 
     def __init__(
         self,
-        noise_std: None | float | list[float] = None,
+        noise_std: None | float | list[float] = _measured_std,
         negate: bool = False,
         dtype: torch.dtype = torch.double,
     ) -> None:
@@ -188,9 +201,8 @@ class HPOMultiFidelityToken(LLMTestProblem):
         fidelity controlled by number of training tokens
 
         Args:
-            noise_std: Standard deviation of the observation noise. If a list is
-                provided, specifies separate noise standard deviations for each
-                objective in a multiobjective problem.
+            noise_std: Standard deviation of the observation noise. Defaults to
+                the empirically measured ``_measured_std``.
             negate: If True, negate the function.
             dtype: The dtype that is used for the bounds of the function.
         """
@@ -212,16 +224,18 @@ class HPOMultiFidelityToken(LLMTestProblem):
             categorical_sizes=[],
             hidden_dim=self.model_config["hidden_dim"],
             output_dim=self.model_config["output_dim"],
+            # absent from pre-v0.2.0 configs, which are all 2-layer
+            n_layers=self.model_config.get("n_layers", 2),
         )
 
     def _evaluate_true(self, X: torch.Tensor) -> torch.Tensor:
         r"""Evaluate the objective using the pretrained emulator.
 
-        For each query, the emulator is evaluated at fidelity intervals of
-        ``fidelity_step`` from ``fidelity_step`` up to (and including) the queried
-        fidelity. The cumulative max across those samples is returned,
-        guaranteeing that higher-fidelity queries produce values >= lower-fidelity
-        queries with the same hyperparameters.
+        Returns the max over ``fidelity_step`` grid points up to the queried
+        fidelity, plus that fidelity itself, so values are largely non-decreasing
+        in fidelity. The appended point is off-grid, so a higher-fidelity query
+        does not sample it and can return a lower value. Above ``fidelity_step``,
+        decreases stay under 1e-4 (measured).
 
         Args:
             X (torch.Tensor): Input tensor of shape ``(N, dim)``.
@@ -237,7 +251,7 @@ class HPOMultiFidelityToken(LLMTestProblem):
             i_min, i_max = self._bounds[i]
             X_copy[:, i] = (X_copy[:, i] - i_min) / (i_max - i_min)
 
-        # Build expanded batch: for each query, sample at fidelity_step intervals up to
+        # build expanded batch: for each query, sample at fidelity_step intervals up to
         # the queried fidelity, then take cumulative max over those samples.
         n = X_copy.shape[0]
         x_list, counts = [], []
@@ -284,8 +298,12 @@ class HPOMultiFidelityToken(LLMTestProblem):
     def cost(self, X: torch.Tensor) -> torch.Tensor:
         r"""Return the evaluation cost at the fidelity encoded in `X`.
 
-        Cost is proportional to the fidelity level. The highest fidelity
-        has a cost of 1 and the lowest fidelity a cost of 0.1.
+        Cost is proportional to the fidelity level, normalized so the highest
+        fidelity costs 1. Training FLOPs are linear in the number of tokens seen
+        (~2x forward per token for LoRA, i.e. ~30 GFLOP/token for Qwen3-8B), so
+        the slope is token-proportional; the 0.05 intercept covers the per-run
+        fixed overhead (model load plus the benchmark eval pass, ~5% of a
+        full-fidelity run). The lowest fidelity therefore costs 0.05.
 
         Args:
             X (torch.Tensor): Input tensor of shape `(N, dim)`, where the last dimension
@@ -296,7 +314,7 @@ class HPOMultiFidelityToken(LLMTestProblem):
         """
 
         fidelity = X[..., -1]
-        return fidelity * 0.9 + 0.1
+        return fidelity * (1 - 0.05) + 0.05
 
 
 class HPOMultiFidelityModel(LLMTestProblem):
@@ -326,9 +344,9 @@ class HPOMultiFidelityModel(LLMTestProblem):
 
     name = "hpo_multifidelity_model"
     hf_repo_high_fid = "chewwt/hpo_qwen8b_emulator"  # high fid
-    hf_revision_high_fid = "v0.1.0"
+    hf_revision_high_fid = "v0.2.0"
     hf_repo_low_fid = "chewwt/hpo_qwen4b_emulator"
-    hf_revision_low_fid = "v0.1.0"
+    hf_revision_low_fid = "v0.2.0"
 
     dim = 8
     _bounds = [
@@ -346,12 +364,15 @@ class HPOMultiFidelityModel(LLMTestProblem):
     discrete_inds = [1, 2, 3, 5, 7]
     categorical_inds = [6]
 
-    _optimal_value = 0.34647  # empirically found
-    _optimizers = [(0.31100, 2, 4, 2, 0.87056, 30, 1, 1)]
+    _optimal_value = 0.35820  # empirically found
+    _optimizers = [(0.19340, 2, 5, 2, 0.97809, 30, 1, 1)]
+
+    # Measured mean std at full budget, over 30 8B configs x 5 seeds.
+    _measured_std = 0.0290
 
     def __init__(
         self,
-        noise_std: None | float | list[float] = None,
+        noise_std: None | float | list[float] = _measured_std,
         negate: bool = False,
         dtype: torch.dtype = torch.double,
     ) -> None:
@@ -359,9 +380,8 @@ class HPOMultiFidelityModel(LLMTestProblem):
         model size (Qwen3-4B-Base, Qwen3-8B-Base)
 
         Args:
-            noise_std: Standard deviation of the observation noise. If a list is
-                provided, specifies separate noise standard deviations for each
-                objective in a multiobjective problem.
+            noise_std: Standard deviation of the observation noise. Defaults to
+                the empirically measured ``_measured_std``.
             negate: If True, negate the function.
             dtype: The dtype that is used for the bounds of the function.
         """
@@ -396,6 +416,8 @@ class HPOMultiFidelityModel(LLMTestProblem):
             categorical_sizes=[],
             hidden_dim=self.model_config_high_fid["hidden_dim"],
             output_dim=self.model_config_high_fid["output_dim"],
+            # absent from pre-v0.2.0 configs, which are all 2-layer
+            n_layers=self.model_config_high_fid.get("n_layers", 2),
         )
         self.low_fidelity_obj_function = MLPFunction(
             self.model_config_low_fid["input_dim"],
@@ -404,6 +426,8 @@ class HPOMultiFidelityModel(LLMTestProblem):
             categorical_sizes=[],
             hidden_dim=self.model_config_low_fid["hidden_dim"],
             output_dim=self.model_config_low_fid["output_dim"],
+            # absent from pre-v0.2.0 configs, which are all 2-layer
+            n_layers=self.model_config_low_fid.get("n_layers", 2),
         )
 
     def _evaluate_true(self, X: torch.Tensor) -> torch.Tensor:
@@ -486,8 +510,12 @@ class HPOMultiFidelityModel(LLMTestProblem):
     def cost(self, X: torch.Tensor) -> torch.Tensor:
         r"""Return the evaluation cost at the fidelity encoded in ``X``.
 
-        Cost is proportional to the fidelity level. The highest fidelity
-        has a cost of 1 and the lowest fidelity a cost of 0.1.
+        Cost is proportional to the fidelity level, normalized so the highest
+        fidelity costs 1. Both fidelities train on the same token budget and
+        differ only in model size, so the ratio is set by FLOPs per token:
+        Qwen3-4B has 3.63B non-embedding params against 6.95B for Qwen3-8B,
+        giving ~16.1 vs ~30.3 GFLOP/token (~2x forward, LoRA) and a cost ratio
+        of 0.53. The 4B fidelity is thus ~2x cheaper.
 
         Args:
             X (torch.Tensor): Input tensor of shape ``(N, dim)``, where the last
@@ -498,4 +526,4 @@ class HPOMultiFidelityModel(LLMTestProblem):
         """
 
         fidelity = X[..., -1]
-        return fidelity * 0.9 + 0.1
+        return fidelity * (1 - 0.53) + 0.53

@@ -41,8 +41,64 @@ Type-specific attributes/functions are available depending on the problem:
 
 | Attribute/Function | Type | Description |
 |---|---|---|
-| `prob.n_objectives` | Multi-objective | Number of objectives |
+| `prob.num_objectives` | Multi-objective | Number of objectives |
 | `prob.cost(X)` | Multi-fidelity | Cost of querying a given fidelity at `X` |
+| `prob.evaluate_noise(X)` | Heteroscedastic | Noise std at `X` |
+
+---
+
+## Observation Noise
+
+The HPO and data mixture problems are **noisy by default**, at an empirically
+measured level. `noise_std` defaults to each problem's `_measured_std` — the
+standard deviation observed across repeat training runs of the real task — rather
+than to `None`. This is the setting the benchmark results were produced under.
+
+Set `noise_std` to override it — a value of your own for a different noise level,
+or `None` for a noiseless problem. `_measured_std` only holds the measured value;
+`noise_std` is the knob.
+
+```python
+prob = HPO()                    # noise_std = 0.0290, the measured value
+prob = HPO(noise_std=None)      # noiseless
+prob = HPO(noise_std=0.01)      # your own level
+
+prob(X)                         # noisy
+prob(X, noise=False)            # noiseless, whatever the default
+```
+
+| Problem | default `noise_std` | Empirically measured over |
+|---|---|---|
+| `HPO` | 0.0290 | 30 configs x 5 seeds, final checkpoint |
+| `HPOMultiFidelityToken` | 0.0220 | 90 (config, checkpoint) groups x 5 seeds, all fidelities |
+| `HPOMultiFidelityModel` | 0.0290 | 30 configs x 5 seeds, final checkpoint (8B; reused for 4B) |
+| `DMCurriculum` | 0.0114 | 100 configs x 5 seeds |
+| `DMCurriculumMO` | `[0.0131, 0.0274, 0.0101]` | 100 configs x 5 seeds, per objective (IFEval / MATH-500 / MBPP+) |
+
+`DMCurriculumHet` is the exception: `noise_std` defaults to `None` and is ignored,
+because its noise is input-dependent. Use `prob.evaluate_noise(X)` to read the std
+at `X`.
+
+Its objective is the mean of the same 3 benchmarks as `DMCurriculum`, but **only
+MATH-500 has a noise emulator**. The IFEval and MBPP+ stds are far flatter over the
+input space, so they are held at the constants measured for `DMCurriculumMO`:
+
+| Benchmark | Noise | Value |
+|---|---|---|
+| IFEval | constant | 0.0131165 |
+| MATH-500 | input-dependent | noise emulator evaluated at `X` |
+| MBPP+ | constant | 0.0100820 |
+
+The two constants are the `DMCurriculumMO` per-objective values unrounded. Replicate
+deviations are near-uncorrelated across the three benchmarks, so the std of their
+average adds in quadrature:
+
+```text
+evaluate_noise(X) = sqrt(sigma_if^2 + sigma_math(X)^2 + sigma_code^2) / 3
+```
+
+Note this departs from botorch, where `noise_std` defaults to `None`. Per-call
+`prob(X, noise=False)` is unaffected and still returns the noiseless value.
  
 ---
  
@@ -52,7 +108,7 @@ Full alphabetical listing of all problems. Click the name to jump to its API ref
 
 | Problem | Type(s) | Dim | Objectives | Description |
 |---|---|---|---|---|
-| [DMCurriculum](./api/dm.md#bolt.DMCurriculum) | Simplex constrained | 6 | 1 | Data mixture curriculum optimization (inputs must fulfill two simplex contraints) |
+| [DMCurriculum](./api/dm.md#bolt.DMCurriculum) | Simplex constrained | 6 | 1 | Data mixture curriculum optimization (inputs must fulfill two simplex constraints) |
 | [DMCurriculumHet](./api/dm.md#bolt.DMCurriculumHet) | Simplex constrained, heteroscedastic noise | 6 | 1 | Data mixture curriculum optimization with heteroscedastic noise |
 | [DMCurriculumMO](./api/dm.md#bolt.DMCurriculumMO) | Simplex constrained, multi-objective | 6 | 3 | Data mixture curriculum optimization with multiple objectives |
 | [HPO](./api/hpo.md#bolt.HPO) | Mixed-variable | 7 | 1 | Hyperparameter optimization for LoRA finetuning |

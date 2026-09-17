@@ -10,7 +10,10 @@ from .base import Function
 
 
 class FeatureNet(nn.Module):
-    r"""Three-layer MLP with LayerNorm for predicting LLM evaluation scores.
+    r"""MLP with LayerNorm for predicting LLM evaluation scores.
+
+    The network is ``n_layers`` blocks of ``Linear -> LayerNorm -> ReLU`` followed
+    by a linear output layer.
 
     Categorical parameters are one-hot encoded before being fed to the network.
     The network operates on the expanded *feature* representation; helper methods
@@ -25,6 +28,7 @@ class FeatureNet(nn.Module):
         cat_nums: list[int] = list(),
         hidden_dim: int = 256,
         output_dim: int = 1,
+        n_layers: int = 2,
     ):
         r"""
         Args:
@@ -33,6 +37,12 @@ class FeatureNet(nn.Module):
             cat_nums: Number of categories for each entry in ``cat_indices`` (same order).
             hidden_dim: Width of each hidden layer.
             output_dim: Number of network outputs.
+            n_layers: Number of hidden ``Linear -> LayerNorm -> ReLU`` blocks. The
+                default of 2 reproduces the architecture used by emulators
+                published before depth was configurable.
+
+        Raises:
+            ValueError: If ``n_layers`` is less than 1.
         """
         super().__init__()
 
@@ -49,16 +59,23 @@ class FeatureNet(nn.Module):
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
+        self.n_layers = n_layers
 
-        self.mlp = nn.Sequential(
-            nn.Linear(int(self.input_dim), self.hidden_dim),
-            nn.LayerNorm(self.hidden_dim),
-            nn.ReLU(),
-            nn.Linear(self.hidden_dim, self.hidden_dim),
-            nn.LayerNorm(self.hidden_dim),
-            nn.ReLU(),
-            nn.Linear(self.hidden_dim, self.output_dim),
-        )
+        if n_layers < 1:
+            raise ValueError(f"n_layers must be >= 1, got {n_layers}")
+
+        # Layer order fixes the state dict keys, so it must match the training
+        # code. n_layers=2 reproduces the original architecture.
+        layers: list[nn.Module] = []
+        in_dim = int(self.input_dim)
+        for _ in range(n_layers):
+            layers.append(nn.Linear(in_dim, self.hidden_dim))
+            layers.append(nn.LayerNorm(self.hidden_dim))
+            layers.append(nn.ReLU())
+            in_dim = self.hidden_dim
+        layers.append(nn.Linear(self.hidden_dim, self.output_dim))
+
+        self.mlp = nn.Sequential(*layers)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         r"""Run the MLP on pre-processed feature inputs.
@@ -181,6 +198,7 @@ class MLPFunction(Function):
         categorical_sizes: list[int] = list(),
         hidden_dim: int = 256,
         output_dim: int = 1,
+        n_layers: int = 2,
     ):
         r"""Load a pretrained :class:`FeatureNet` from disk.
 
@@ -194,6 +212,8 @@ class MLPFunction(Function):
                 ``categorical_inds`` (must be in the same order).
             hidden_dim: Width of each hidden layer in the MLP.
             output_dim: Number of network outputs.
+            n_layers: Number of hidden blocks in the MLP. Must match the
+                architecture the weights were trained with.
         """
 
         super().__init__()
@@ -209,6 +229,7 @@ class MLPFunction(Function):
             cat_nums=categorical_sizes,
             hidden_dim=hidden_dim,
             output_dim=output_dim,
+            n_layers=n_layers,
         )
 
         if Path(model_path).suffix == ".safetensors":

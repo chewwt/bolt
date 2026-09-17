@@ -28,6 +28,36 @@ def unstandardize_y(
     return (y * y_std) + y_mean
 
 
+def pull_noise_info_from_hf_hub(
+    hf_repo: str, revision: str | None = None
+) -> tuple[str, dict]:
+    r"""Download noise emulator weights and config from a HuggingFace repo.
+
+    Files fetched (cached locally by ``huggingface_hub``):
+        - ``noise_model.safetensors`` — pretrained weights
+        - ``config.json`` — kernel config, including the ``gamma`` the model was
+          fit with from emulator version 0.2.0 onwards
+
+    Args:
+        hf_repo: HuggingFace repository id, e.g.
+            ``"chewwt/dm_qwen4b_noise_emulator"``.
+        revision: Git revision to fetch — a tag, branch, or commit SHA.
+            Defaults to the repo's main branch.
+
+    Returns:
+        A two-tuple ``(model_path, model_config)`` where ``model_path`` is the
+        local path to the weights file and ``model_config`` is the parsed JSON
+        dict.
+    """
+    model_path = hf_hub_download(hf_repo, "noise_model.safetensors", revision=revision)
+    config_path = hf_hub_download(hf_repo, "config.json", revision=revision)
+
+    with open(config_path, "r") as f:
+        model_config = json.load(f)
+
+    return model_path, model_config
+
+
 def pull_info_from_hf_hub(
     hf_repo: str, revision: str | None = None
 ) -> tuple[str, dict, np.ndarray, np.ndarray]:

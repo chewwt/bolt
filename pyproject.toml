@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bolt-bench"
-version = "0.2.0.dev0"
+version = "0.2.0.dev1"
 # dynamic = ["version"]
 description = "Benchmarks for BO on LLM Tasks"
 readme = "README.md"

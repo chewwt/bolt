@@ -22,7 +22,7 @@ Use **0.1.1 or later**. From 0.1.1, each release pins a specific emulator revisi
 |---|---|
 | ≤ 0.1.0 | tracks `main` (unpinned) |
 | 0.1.1 | `v0.1.0` |
-| 0.2.0 | `v0.2.0` (HPO and data mixture), `v0.1.0` (prompt optimization) |
+| 0.2.0 | `v0.2.0` (HPO and data mixture), `v0.1.0` (prompt optimization and parallelism configuration) |
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ import torch
 from bolt import HPO
 
 # 7-dim HPO problem: returns a scalar surrogate of eval score
-prob = HPO(noise_std=0.001, negate=False)
+prob = HPO()
 
 X = torch.Tensor([[0, 2, 2, 2, 0.5, 30, 2]])  # one candidate configuration
 y = prob(X)  # shape: (1, 1)
@@ -53,6 +53,9 @@ y = prob(X)  # shape: (1, 1)
 | Prompt optimization (256-dim) | `PO256` | 256 | discrete candidate set |
 | Prompt optimization (512-dim) | `PO512` | 512 | discrete candidate set |
 | Prompt optimization (768-dim) | `PO768` | 768 | discrete candidate set |
+| Parallelism configuration (16 GPUs) | `PCO16` | 8 | discrete candidate set, black-box constraint |
+| Parallelism configuration (32 GPUs) | `PCO32` | 8 | discrete candidate set, black-box constraint |
+| Parallelism configuration (64 GPUs) | `PCO64` | 8 | discrete candidate set, black-box constraint |
 
 ### Observation noise
 

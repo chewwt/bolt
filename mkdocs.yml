@@ -49,6 +49,7 @@ nav:
       - Hyperparameter Optimization: api/hpo.md
       - Data Mixture Optimization: api/dm.md
       - Prompt Optimization: api/po.md
+      - Parallelism Configuration Optimization: api/pco.md
 
 markdown_extensions:
   - pymdownx.highlight:

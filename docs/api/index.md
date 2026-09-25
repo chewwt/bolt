@@ -15,3 +15,6 @@ API reference for all classes and methods in this library. For problem descripti
 | [PO256](./po.md#bolt.PO256) |
 | [PO512](./po.md#bolt.PO512) |
 | [PO768](./po.md#bolt.PO768) |
+| [PCO16](./pco.md#bolt.PCO16) |
+| [PCO32](./pco.md#bolt.PCO32) |
+| [PCO64](./pco.md#bolt.PCO64) |

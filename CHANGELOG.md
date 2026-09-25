@@ -1,6 +1,15 @@
 ## [Unreleased]
 
 ### Added
+- Parallelism configuration optimization problems `PCO16`, `PCO32` and `PCO64`:
+  tabular, over a discrete candidate set (`candidates()`), with a black-box
+  out-of-memory constraint exposed as a memory-margin slack (`evaluate_slack`).
+  The objective imputes OOM rows from their nearest feasible neighbours, so
+  regret should count feasible points only.
+  Also `evaluate_peak_mem`. Noiseless by default, since each
+  configuration was run once. Data pinned to `v0.1.0`
+- `candidates()` on the prompt optimization problems, returning the full
+  discrete candidate set (previously only reachable as `prob.obj_func.Xs`)
 - `n_layers` argument on `FeatureNet` and `MLPFunction`, read from the emulator
   `config.json`. Required by the v0.2.0 emulators, where layers are specified by the config
 - `gamma` argument on `KRFunction`, read from the noise emulator `config.json`
@@ -10,6 +19,9 @@
   across repeat training runs of the real task
 
 ### Changed
+- The prompt optimization problems warn when evaluated at a point that is not a
+  candidate (farther than `1e-4` from every table entry). The point is still
+  snapped to its nearest candidate, as before
 - `HPO`, `HPOMultiFidelityToken`, `HPOMultiFidelityModel`, `DMCurriculum` and
   `DMCurriculumMO` are noisy by default: `noise_std` now defaults to the
   empirically measured `_measured_std` rather than `None`, which is the setting the
@@ -33,6 +45,13 @@
 - `HPOMultiFidelityModel.cost` is now `0.47 * fidelity + 0.53`, derived from the
   FLOPs-per-token ratio of Qwen3-4B to Qwen3-8B. The 4B fidelity is ~2x cheaper,
   not 10x
+
+### Fixed
+- `TabularFunction` with more than one input column: the table is now stacked
+  column by column, and `x_proc_func` receives that array rather than the raw
+  column data
+- `TabularFunction` output columns with nulls load as NaN instead of failing on
+  object dtype
 
 ## [0.1.1] - 2026-09-16
 ### Added

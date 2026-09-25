@@ -28,6 +28,7 @@ y = prob(X)  # shape: (1,)
 | [Hyperparameter optimization](api/hpo.md) | `HPO`, `HPOMultiFidelityToken`, `HPOMultiFidelityModel` | mixed continuous/discrete/categorical; multi-fidelity variants available |
 | [Data mixture](api/dm.md) | `DMCurriculum`, `DMCurriculumMO`, `DMCurriculumHet` | simplex-constrained inputs; multi-objective and heteroscedastic variants |
 | [Prompt optimization](api/po.md) | `PO128`, `PO256`, `PO512`, `PO768` | high-dimensional continuous embedding search (128–768 dims) |
+| [Parallelism configuration](api/pco.md) | `PCO16`, `PCO32`, `PCO64` | black-box constraint over a discrete candidate set |
 
 See [Problems](problems.md) for full details on inputs, constraints, and fidelity parameters.
 

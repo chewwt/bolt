@@ -14,7 +14,11 @@ Full documentation is available at [bolt-bench.readthedocs.io](https://bolt-benc
 
 ## Installation
 
-`pip install bolt-bench`
+```bash
+pip install bolt-bench
+# or with uv
+uv pip install bolt-bench
+```
 
 Use **0.1.1 or later**. From 0.1.1, each release pins a specific emulator revision. Earlier versions load emulator weights from the HuggingFace `main` branch, so their results shift whenever new weights are published.
 

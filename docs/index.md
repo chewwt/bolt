@@ -6,7 +6,17 @@ A benchmark suite for Bayesian optimization of expensive LLM tasks. Each problem
 
 ```bash
 pip install bolt-bench
+# or with uv
+uv pip install bolt-bench
 ```
+
+Use **0.1.1 or later**. From 0.1.1, each release pins a specific emulator revision. Earlier versions load emulator weights from the HuggingFace `main` branch, so their results shift whenever new weights are published.
+
+| bolt | emulator revision |
+|---|---|
+| ≤ 0.1.0 | tracks `main` (unpinned) |
+| 0.1.1 | `v0.1.0` |
+| 0.2.0 | `v0.2.0` (HPO and data mixture), `v0.1.0` (prompt optimization and parallelism configuration) |
 
 ## Quick Start
 

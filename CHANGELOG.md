@@ -1,4 +1,4 @@
-## [Unreleased]
+## [0.2.0] - 2026-10-11
 
 ### Added
 - Parallelism configuration optimization problems `PCO16`, `PCO32` and `PCO64`:
